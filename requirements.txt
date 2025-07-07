@@ -1,0 +1,5 @@
+#openai>=1.93.0
+openai
+python-dotenv
+flask
+pymysql
