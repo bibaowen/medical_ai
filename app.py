@@ -11,6 +11,7 @@ load_dotenv()
 
 # Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+print("Loaded OpenAI Key:", os.getenv("OPENAI_API_KEY"))
 
 # MySQL config
 DB_HOST = "db5018172480.hosting-data.io"
