@@ -106,6 +106,12 @@ CASE NOTE:
 
     except Exception as e:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
+    import os
 
 if __name__ == '__main__':
-    app.run(debug=True)
+   port = int(os.environ.get("PORT", 10000))  # Default port for Render
+   app.run(host='0.0.0.0', port=port)
+
+
+#if __name__ == '__main__':
+    #app.run(debug=True)
