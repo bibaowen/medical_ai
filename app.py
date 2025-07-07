@@ -1,19 +1,16 @@
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+import openai
 import os
 import json
 import re
 import pymysql
-from openai import OpenAI
 
-# Load environment variables from .env
+# Load OpenAI API Key
 load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-print("Loaded OpenAI Key:", os.getenv("OPENAI_API_KEY"))
-
-# MySQL config
+# MySQL config (edit if needed)
 DB_HOST = "db5018172480.hosting-data.io"
 DB_USER = "dbu3245801"
 DB_PASS = "Biba2@portmore"
@@ -21,7 +18,7 @@ DB_NAME = "dbs14409615"
 
 app = Flask(__name__)
 
-# Specialty prompt modifier from DB
+# Get specialty modifier from DB
 def get_prompt_modifier(specialty_slug):
     try:
         conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
@@ -51,47 +48,55 @@ def analyze():
     prompt = f"""
 You are a clinical diagnostic assistant AI. Analyze the following patient case note and return only a valid structured JSON object with the fields below.
 
-Return all fields, even if no data is available. Leave them as blank strings or empty lists.
+{prompt_modifier}
 
-Your JSON output must include:
-- name
-- age
-- gender
-- symptoms
-- past_medical_history
-- vitals (with blood_pressure, heart_rate, oxygen_saturation)
-- exam_findings
-- labs
-- summary
-- differential_diagnosis (array)
-- suggested_tests (array)
-- management_plan
-- tips
-- recommendations
+All fields must be returned even if blank. Do not skip fields. Output only JSON.
+
+JSON FORMAT:
+{{
+  "name": "",
+  "age": 0,
+  "gender": "",
+  "symptoms": [],
+  "past_medical_history": [],
+  "vitals": {{
+    "blood_pressure": "",
+    "heart_rate": "",
+    "oxygen_saturation": ""
+  }},
+  "exam_findings": "",
+  "labs": "",
+  "summary": "",
+  "differential_diagnosis": [],
+  "suggested_tests": [],
+  "management_plan": "",
+  "tips": "",
+  "recommendations": ""
+}}
 
 CASE NOTE:
-\"\"\"{note}\"\"\"
+{note}
 """
+
     try:
-        response = client.chat.completions.create(
+        response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a clinical AI that returns only JSON medical analysis."},
+                {"role": "system", "content": "You are a clinical AI that returns only JSON structured data."},
                 {"role": "user", "content": prompt}
             ]
         )
 
         content = response.choices[0].message.content.strip()
-        print("🔍 Raw AI Response:\n", content)
+        print("🔍 Raw AI Response:", content)
 
-        # Attempt to parse JSON
         try:
             return jsonify(json.loads(content))
         except json.JSONDecodeError:
-            # Try to extract JSON block
             match = re.search(r"\{.*\}", content, re.DOTALL)
             if match:
-                return jsonify(json.loads(match.group()))
+                json_str = match.group()
+                return jsonify(json.loads(json_str))
             else:
                 return jsonify({"error": "AI returned non-JSON response", "raw": content}), 500
 
@@ -99,5 +104,5 @@ CASE NOTE:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 10000))  # Render's default
+    port = int(os.environ.get("PORT", 10000))
     app.run(host='0.0.0.0', port=port)
