@@ -14,7 +14,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 DB_HOST = "db5018172480.hosting-data.io"
 DB_USER = "dbu3245801"
 DB_PASS = "Biba2@portmore"
-DB_NAME = "medical_ai"
+DB_NAME = "dbs14409615"
 
 app = Flask(__name__)
 
@@ -106,12 +106,12 @@ CASE NOTE:
 
     except Exception as e:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
-    import os
+
 
 if __name__ == '__main__':
-   port = int(os.environ.get("PORT", 10000))  # Default port for Render
-   app.run(host='0.0.0.0', port=port)
+    port = int(os.environ.get("PORT", 10000))  # Default port for Render
+    app.run(host='0.0.0.0', port=port)
 
 
 #if __name__ == '__main__':
-    #app.run(debug=True)
+ #   app.run(debug=True)
