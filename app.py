@@ -51,36 +51,27 @@ def analyze():
     prompt = f"""
 You are a clinical diagnostic assistant AI. Analyze the following patient case note and return only a valid structured JSON object with the fields below.
 
-{prompt_modifier}
+Return all fields, even if no data is available. Leave them as blank strings or empty lists.
 
-Return all fields even if unknown. Leave blank strings or empty lists where applicable.
-
-Return only valid JSON in this format:
-{{
-  "name": "",
-  "age": 0,
-  "gender": "",
-  "symptoms": [],
-  "past_medical_history": [],
-  "vitals": {{
-    "blood_pressure": "",
-    "heart_rate": "",
-    "oxygen_saturation": ""
-  }},
-  "exam_findings": "",
-  "labs": "",
-  "summary": "",
-  "differential_diagnosis": [],
-  "suggested_tests": [],
-  "management_plan": "",
-  "tips": "",
-  "recommendations": ""
-}}
+Your JSON output must include:
+- name
+- age
+- gender
+- symptoms
+- past_medical_history
+- vitals (with blood_pressure, heart_rate, oxygen_saturation)
+- exam_findings
+- labs
+- summary
+- differential_diagnosis (array)
+- suggested_tests (array)
+- management_plan
+- tips
+- recommendations
 
 CASE NOTE:
 \"\"\"{note}\"\"\"
 """
-
     try:
         response = client.chat.completions.create(
             model="gpt-4o",
