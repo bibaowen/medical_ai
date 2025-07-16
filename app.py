@@ -72,6 +72,8 @@ CASE:
         full_response = response.choices[0].message.content.strip()
         print("✅ AI Output:\n", full_response)
         return jsonify({"full_response": full_response})
+        #return jsonify({"full_response": ai_response_text})
+
 
     except Exception as e:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
