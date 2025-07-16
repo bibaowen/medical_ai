@@ -2,15 +2,13 @@ from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 import openai
 import os
-import json
-import re
 import pymysql
 
-# Load OpenAI API Key
+# Load environment variables
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# MySQL config (edit if needed)
+# MySQL config
 DB_HOST = "db5018172480.hosting-data.io"
 DB_USER = "dbu3245801"
 DB_PASS = "Biba2@portmore"
@@ -18,7 +16,7 @@ DB_NAME = "dbs14409615"
 
 app = Flask(__name__)
 
-# Get specialty modifier from DB
+# Get specialty-specific prompt modifier
 def get_prompt_modifier(specialty_slug):
     try:
         conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
@@ -32,7 +30,7 @@ def get_prompt_modifier(specialty_slug):
 
 @app.route('/')
 def home():
-    return "✅ AI Medical Parser API is running."
+    return "✅ Medical AI is running."
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
@@ -46,35 +44,19 @@ def analyze():
     prompt_modifier = get_prompt_modifier(specialty)
 
     prompt = f"""
-You are a clinical diagnostic assistant AI. Analyze the following patient case note and return only a valid structured JSON object with the fields below.
+You are a medical diagnostic assistant. Based on the following clinical case, generate a detailed structured analysis including:
+
+- Differential Diagnosis
+- Pathophysiology Summary
+- Workup Plan
+- Management Plan
+- Disposition
+
+Use clear headings and medical reasoning. Format your response in professional paragraph and bullet list format.
 
 {prompt_modifier}
 
-All fields must be returned even if blank. Do not skip fields. Output only JSON.
-
-JSON FORMAT:
-{{
-  "name": "",
-  "age": 0,
-  "gender": "",
-  "symptoms": [],
-  "past_medical_history": [],
-  "vitals": {{
-    "blood_pressure": "",
-    "heart_rate": "",
-    "oxygen_saturation": ""
-  }},
-  "exam_findings": "",
-  "labs": "",
-  "summary": "",
-  "differential_diagnosis": [],
-  "suggested_tests": [],
-  "management_plan": "",
-  "tips": "",
-  "recommendations": ""
-}}
-
-CASE NOTE:
+CASE:
 {note}
 """
 
@@ -82,23 +64,12 @@ CASE NOTE:
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a clinical AI that returns only JSON structured data."},
+                {"role": "system", "content": "You are a clinical assistant generating full diagnostic impressions."},
                 {"role": "user", "content": prompt}
             ]
         )
-
         content = response.choices[0].message.content.strip()
-        print("🔍 Raw AI Response:", content)
-
-        try:
-            return jsonify(json.loads(content))
-        except json.JSONDecodeError:
-            match = re.search(r"\{.*\}", content, re.DOTALL)
-            if match:
-                json_str = match.group()
-                return jsonify(json.loads(json_str))
-            else:
-                return jsonify({"error": "AI returned non-JSON response", "raw": content}), 500
+        return jsonify({"full_response": content})
 
     except Exception as e:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
