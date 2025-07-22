@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from dotenv import load_dotenv
 import openai
 import os
-import pymysql
+import psycopg2
 from datetime import datetime
 
 # Load environment variables

@@ -2,4 +2,5 @@
 openai
 python-dotenv
 flask
-pymysql
+psycopg2-binary
+
