@@ -9,7 +9,7 @@ from datetime import datetime
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-DB_HOST = "localhost"
+DB_HOST = "db5018172480.hosting-data.io"
 DB_USER = "dbu3245801"
 DB_PASS = "Biba2@portmore"
 DB_NAME = "dbs14409615"
