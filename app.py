@@ -8,7 +8,7 @@ import pymysql
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Optional DB config if you still use prompt modifiers
+# Database connection for specialty-specific prompt modifiers
 DB_HOST = "db5018172480.hosting-data.io"
 DB_USER = "dbu3245801"
 DB_PASS = "Biba2@portmore"
@@ -42,17 +42,38 @@ def analyze():
 
     modifier = get_prompt_modifier(specialty)
 
-    # 👇 Structured but free-text prompt
     prompt = f"""
-You are a highly trained medical AI. Given the following clinical case, provide a detailed diagnostic breakdown using plain structured headings:
+You are a highly trained clinical decision support AI. Analyze the following clinical case and return your diagnostic reasoning using these 10 structured sections:
 
-1. Differential Diagnosis
-2. Pathophysiology Summary
-3. Workup
-4. Management
-5. Disposition
+1. 🧠 Differential Diagnosis  
+List common, atypical, and potentially life-threatening causes. Justify each based on symptoms, history, and exam findings.
 
-Only return medically formatted text — do not explain your role.
+2. 🧬 Pathophysiology Integration  
+Explain how current presentation links to the patient’s chronic or acute conditions.
+
+3. 🧪 Diagnostic Workup  
+List tests/labs/imaging. Explain rationale, what you’re looking for, and how it guides management.
+
+4. 💊 Treatment and Medications  
+Detailed treatment plan with medications (dose, route, frequency). Include rationale, alternatives, monitoring, and dose adjustments.
+
+5. ⚖️ Risk Stratification & Clinical Judgment  
+Assess acuity and escalation needs. Identify red flags or signs of deterioration.
+
+6. 🩺 Management of Chronic Conditions  
+Explain how chronic diseases should be managed/adjusted during this episode.
+
+7. 🧼 Infection Consideration & Antibiotics  
+If infection suspected, recommend empiric treatment with spectrum, dosing, and de-escalation strategy.
+
+8. 💓 Disposition & Follow-Up  
+Recommend setting (outpatient vs inpatient), follow-up timeline, specialists needed, and discharge criteria.
+
+9. 📝 Red Flags or Missed Diagnoses  
+Mention critical but rare diagnoses not to miss and how to rule them out.
+
+10. 📋 Clinical Guidelines Integration  
+Cite relevant clinical guidelines (e.g., AHA, IDSA) and how they inform your approach.
 
 {modifier}
 
@@ -64,7 +85,7 @@ CASE:
         response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You are a medical expert that outputs only structured diagnostic reasoning text."},
+                {"role": "system", "content": "You are a medical expert that returns only formatted diagnostic analysis."},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -72,8 +93,6 @@ CASE:
         full_response = response.choices[0].message.content.strip()
         print("✅ AI Output:\n", full_response)
         return jsonify({"full_response": full_response})
-        #return jsonify({"full_response": ai_response_text})
-
 
     except Exception as e:
         return jsonify({"error": f"Error during OpenAI call: {str(e)}"}), 500
