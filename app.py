@@ -9,10 +9,11 @@ from datetime import datetime
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-DB_HOST = "db5018172480.hosting-data.io"
-DB_USER = "dbu3245801"
-DB_PASS = "Biba2@portmore"
-DB_NAME = "dbs14409615"
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_PORT = os.getenv("DB_PORT", 5432)
 
 app = Flask(__name__)
 
@@ -51,9 +52,18 @@ HTML_TEMPLATE = """
 </html>
 """
 
+def get_connection():
+    return psycopg2.connect(
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS,
+        port=DB_PORT
+    )
+
 def get_prompt_modifier(specialty_slug):
     try:
-        conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
+        conn = get_connection()
         with conn.cursor() as cur:
             cur.execute("SELECT prompt_modifier FROM specialties WHERE slug = %s", (specialty_slug,))
             row = cur.fetchone()
@@ -78,25 +88,25 @@ def analyze():
     modifier = get_prompt_modifier(specialty)
     patient_name = note.split(",")[0].strip() if "," in note else "Unknown"
 
-    prompt = f"""
-You are a highly trained clinical decision support AI. Analyze the following clinical case and return your diagnostic reasoning using these 10 structured sections:
+    prompt = f"""You are a highly trained clinical decision support AI. Analyze the following clinical case and return your diagnostic reasoning using these 10 structured sections:
 
 1. 🧠 Differential Diagnosis
 2. 🧬 Pathophysiology Integration
 3. 🧪 Diagnostic Workup
 4. 💊 Treatment and Medications
 5. ⚖️ Risk Stratification & Clinical Judgment
-6. 🩺 Management of Chronic Conditions
-7. 🧼 Infection Consideration & Antibiotics
+6. 🦥 Management of Chronic Conditions
+7. 🦼️ Infection Consideration & Antibiotics
 8. 💓 Disposition & Follow-Up
-9. 📝 Red Flags or Missed Diagnoses
+9. 🗘️ Red Flags or Missed Diagnoses
 10. 📋 Clinical Guidelines Integration
 
 {modifier}
 
 CASE:
-""" + note +"""
+""" + note + """
 """
+
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
@@ -108,11 +118,11 @@ CASE:
 
         full_response = response.choices[0].message.content.strip()
 
-        conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
+        conn = get_connection()
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO clinical_analyses (patient_name, specialty, note, analysis)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO clinical_analyses (patient_name, specialty, note, analysis, created_at)
+                VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
             """, (patient_name, specialty, note, full_response))
             conn.commit()
 
@@ -127,14 +137,20 @@ def history():
     if not patient_name:
         return jsonify({"error": "Missing patient_name"}), 400
     try:
-        conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
-        with conn.cursor(pymysql.cursors.DictCursor) as cur:
+        conn = get_connection()
+        with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, patient_name, specialty, created_at FROM clinical_analyses
                 WHERE patient_name = %s
                 ORDER BY created_at DESC
             """, (patient_name,))
-            return jsonify(cur.fetchall())
+            rows = cur.fetchall()
+            return jsonify([{
+                "id": r[0],
+                "patient_name": r[1],
+                "specialty": r[2],
+                "created_at": r[3].isoformat()
+            } for r in rows])
     except Exception as e:
         return jsonify({"error": f"DB error: {str(e)}"}), 500
 
@@ -148,19 +164,23 @@ def compare():
         return jsonify({"error": "Missing id1 or id2"}), 400
 
     try:
-        conn = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_NAME)
-        with conn.cursor(pymysql.cursors.DictCursor) as cur:
-            cur.execute("SELECT * FROM clinical_analyses WHERE id IN (%s, %s)", (id1, id2))
-            records = cur.fetchall()
+        conn = get_connection()
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, patient_name, specialty, note, analysis, created_at FROM clinical_analyses WHERE id = %s", (id1,))
+            record1 = cur.fetchone()
+            cur.execute("SELECT id, patient_name, specialty, note, analysis, created_at FROM clinical_analyses WHERE id = %s", (id2,))
+            record2 = cur.fetchone()
 
-            if len(records) != 2:
+            if not record1 or not record2:
                 return jsonify({"error": "One or both records not found"}), 404
 
-            records = sorted(records, key=lambda x: x['id'])
+            r1 = dict(zip(["id", "patient_name", "specialty", "note", "analysis", "created_at"], record1))
+            r2 = dict(zip(["id", "patient_name", "specialty", "note", "analysis", "created_at"], record2))
+
             if render == "json":
-                return jsonify({"comparison": records})
+                return jsonify({"comparison": [r1, r2]})
             else:
-                return render_template_string(HTML_TEMPLATE, record1=records[0], record2=records[1])
+                return render_template_string(HTML_TEMPLATE, record1=r1, record2=r2)
 
     except Exception as e:
         return jsonify({"error": f"DB compare error: {str(e)}"}), 500
