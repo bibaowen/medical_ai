@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, render_template_string
 from dotenv import load_dotenv
 import openai
 import os
-import psycopg2
+import pymysql
 from datetime import datetime
 
 # Load environment variables
@@ -53,7 +53,7 @@ HTML_TEMPLATE = """
 """
 
 def get_connection():
-    return psycopg2.connect(
+    return pymysql.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
