@@ -19,7 +19,7 @@ services:
   - type: web
     name: ai-medical-php
     env: docker
-    dockerfilePath: ./php-app/Dockerfile
+    dockerfilePath: ./frontend/Dockerfile
     envVars:
       - key: DB_HOST
         sync: false
