@@ -3,4 +3,6 @@ openai
 python-dotenv
 flask
 psycopg2
+gunicorn==22.0.0
+
 

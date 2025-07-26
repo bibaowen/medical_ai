@@ -15,6 +15,17 @@ services:
         sync: false
       - key: DB_NAME
         sync: false
-        envVars:
-      - fromFile: .env
 
+  - type: web
+    name: ai-medical-php
+    env: docker
+    dockerfilePath: ./php-app/Dockerfile
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        sync: false
