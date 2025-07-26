@@ -1,5 +1,5 @@
 <?php
-$host = "localhost";
+$host = "10.223.138.288";
 $user = "autopjoo_practitioners";
 $pass = "Biba2@portmore";
 $db = "autopjoo_medical_ai";
