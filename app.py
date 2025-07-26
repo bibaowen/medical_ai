@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, render_template_string
 from dotenv import load_dotenv
 import openai
 import os
-import pymysql
+import psycopg2
+from psycopg2 import OperationalError
 from datetime import datetime
 
 # Load environment variables
@@ -13,7 +14,7 @@ DB_HOST = os.getenv("DB_HOST")
 DB_NAME = os.getenv("DB_NAME")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
-DB_PORT = os.getenv("DB_PORT", 1000)
+DB_PORT = os.getenv("DB_PORT", 5432)
 
 app = Flask(__name__)
 
