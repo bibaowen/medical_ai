@@ -1,8 +1,8 @@
 <?php
-$host = "10.223.138.288";
-$user = "autopjoo_practitioners";
-$pass = "Biba2@portmore";
-$db = "autopjoo_medical_ai";
+$host = "dpg-d22i0nidbo4c73f94l8g-a.oregon-postgres.render.com";
+$user = "owen";
+$pass = "PYpI59sLWRCoXxogLpf4lh5nEhtXehRn";
+$db = "medical_db_p50s";
 
 /*$host = "localhost";
 $user = "root";
