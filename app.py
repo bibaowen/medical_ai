@@ -54,7 +54,7 @@ HTML_TEMPLATE = """
 """
 
 def get_connection():
-    return pymysql.connect(
+    return psycopg2.connect(
         host=DB_HOST,
         database=DB_NAME,
         user=DB_USER,
