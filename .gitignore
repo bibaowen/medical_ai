@@ -1,5 +1,40 @@
-.env
+# Python
 __pycache__/
 *.pyc
-*.log
+*.pyo
+*.pyd
 *.sqlite3
+.env
+instance/
+.env.*
+
+# Flask/Misc
+*.log
+*.db
+*.bak
+*.tmp
+*.swp
+
+# PHP
+frontend/vendor/
+api/.env
+frontend/composer.lock
+
+# Node (if using frontend tools later)
+node_modules/
+npm-debug.log*
+
+# Docker
+*.pid
+*.tar
+docker-compose.override.yml
+.env.local
+
+# macOS/Linux
+.DS_Store
+*.sublime-workspace
+*.idea/
+.vscode/
+
+# Render build artifacts
+*.render-build*
