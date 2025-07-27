@@ -2,7 +2,6 @@
 openai
 python-dotenv
 flask
-psycopg2
-gunicorn==22.0.0
+psycopg2-binary
 
 
