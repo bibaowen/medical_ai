@@ -1,16 +1,13 @@
 <?php
 $host = "dpg-d22i0nidbo4c73f94l8g-a.oregon-postgres.render.com";
+$port = "5432";
+$dbname = "medical_db_p50s";
 $user = "owen";
-$pass = "PYpI59sLWRCoXxogLpf4lh5nEhtXehRn";
-$db = "medical_db_p50s";
+$password = "PYpI59sLWRCoXxogLpf4lh5nEhtXehRn";
 
-/*$host = "localhost";
-$user = "root";
-$pass = "owen";
-$db = "medical_ai";*/
+$conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$password");
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+if (!$conn) {
+    die("Connection failed: " . pg_last_error());
 }
-?>
+
