@@ -16,9 +16,9 @@ instance/
 *.swp
 
 # PHP
-frontend/vendor/
-api/.env
-frontend/composer.lock
+vendor/
+.env
+composer.lock
 
 # Node (if using frontend tools later)
 node_modules/
