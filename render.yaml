@@ -1,31 +1,19 @@
 services:
   - type: web
-    name: ai-medical-api
+    name: medical-ai
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "python app.py"
+    buildCommand: ""
+    startCommand: gunicorn app:app
     envVars:
       - key: OPENAI_API_KEY
         sync: false
       - key: DB_HOST
         sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASS
-        sync: false
       - key: DB_NAME
-        sync: false
-
-  - type: web
-    name: ai-medical-php
-    env: docker
-    dockerfilePath: ./frontend/Dockerfile
-    envVars:
-      - key: DB_HOST
         sync: false
       - key: DB_USER
         sync: false
       - key: DB_PASS
         sync: false
-      - key: DB_NAME
+      - key: DB_PORT
         sync: false
