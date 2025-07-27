@@ -78,44 +78,18 @@ def get_prompt_modifier(specialty_slug):
 def home():
     return "✅ Medical AI API with history & comparison dashboard is running."
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username == 'admin' and password == 'password':
-            session['user'] = username
-            return redirect(url_for('dashboard'))
-        return "❌ Invalid credentials", 401
-    return """
-    <h2>Login</h2>
-    <form method="post">
-        Username: <input name="username"><br>
-        Password: <input name="password" type="password"><br>
-        <input type="submit" value="Login">
-    </form>
-    """
-
-@app.route('/dashboard')
-def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return f"<h2>Welcome {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
-
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect(url_for('login'))
-
 @app.route('/analyze', methods=['POST'])
 def analyze():
     data = request.json
     note = data.get("note", "").strip()
     specialty = data.get("specialty", "general")
+
     if not note:
         return jsonify({"error": "Missing clinical note"}), 400
+
     modifier = get_prompt_modifier(specialty)
     patient_name = note.split(",")[0].strip() if "," in note else "Unknown"
+
     prompt = f"""You are a highly trained clinical decision support AI. Analyze the following clinical case and return your diagnostic reasoning using these 10 structured sections:
 
 1. 🧠 Differential Diagnosis
@@ -132,8 +106,9 @@ def analyze():
 {modifier}
 
 CASE:
-""" + note + """
+{note}
 """
+
     try:
         response = openai.chat.completions.create(
             model="gpt-4o",
@@ -142,7 +117,9 @@ CASE:
                 {"role": "user", "content": prompt}
             ]
         )
+
         full_response = response.choices[0].message.content.strip()
+
         conn = get_connection()
         with conn.cursor() as cur:
             cur.execute("""
@@ -150,7 +127,9 @@ CASE:
                 VALUES (%s, %s, %s, %s, CURRENT_TIMESTAMP)
             """, (patient_name, specialty, note, full_response))
             conn.commit()
+
         return jsonify({"full_response": full_response})
+
     except Exception as e:
         return jsonify({"error": f"Error during processing: {str(e)}"}), 500
 
@@ -182,8 +161,10 @@ def compare():
     id1 = request.args.get("id1")
     id2 = request.args.get("id2")
     render = request.args.get("render", "html")
+
     if not id1 or not id2:
         return jsonify({"error": "Missing id1 or id2"}), 400
+
     try:
         conn = get_connection()
         with conn.cursor() as cur:
@@ -191,14 +172,18 @@ def compare():
             record1 = cur.fetchone()
             cur.execute("SELECT id, patient_name, specialty, note, analysis, created_at FROM clinical_analyses WHERE id = %s", (id2,))
             record2 = cur.fetchone()
+
             if not record1 or not record2:
                 return jsonify({"error": "One or both records not found"}), 404
+
             r1 = dict(zip(["id", "patient_name", "specialty", "note", "analysis", "created_at"], record1))
             r2 = dict(zip(["id", "patient_name", "specialty", "note", "analysis", "created_at"], record2))
+
             if render == "json":
                 return jsonify({"comparison": [r1, r2]})
             else:
                 return render_template_string(HTML_TEMPLATE, record1=r1, record2=r2)
+
     except Exception as e:
         return jsonify({"error": f"DB compare error: {str(e)}"}), 500
 
