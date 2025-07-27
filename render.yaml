@@ -4,6 +4,7 @@ services:
     env: python
     buildCommand: ""
     startCommand: gunicorn app:app
+    autoDeploy: true
     envVars:
       - key: OPENAI_API_KEY
         sync: false
